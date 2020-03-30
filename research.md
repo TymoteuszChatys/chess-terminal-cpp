@@ -133,10 +133,42 @@ Incorporating PGN loading and saving would be good for the opening tree as almos
 
 ## 2.2 Board Game Representation (in house)
 
-10x12 Board array method (Array of length 120) -> much etter than a 8x8(=64) array due to the simplicity of finding illegal moves
+Usually want to utilize more than one board representation at different times, for efficiency -> execution efficiency and memory footprint
+but we also need to consider the complexity. If it is simpler, it may be easier to debug.
+
+Array piece lists were first used in early programs but the newer approach is bitboards which are found to be more efficient but a more
+elaborate approach.
+
+A full description requires: 
+1. location of each piece
+2. whose turn it is to move
+3. 50-move draw rule
+4. castling abailability
+5. en passant capture possibility
+6. (three-fold repetition draw) -> but will need a complete history of the game from the last irreversible action,
+can be usually tracked in seperate data structures.
+
+Space list array (8x8) two dimensional or 64 one dimensional 
+
+1.  0 -> empty
+2. positive -> white
+3. negative -> black
+4. with pawn = 1, knight = 2 ...  
+
+Problem with this is checking that each move stays on the board therefore:
+
+10x12 Board array method (Array of length 120) -> much better than a 8x8(=64) array due to the simplicity of finding illegal moves
 
 https://www.chessprogramming.org/10x12_Board
 
 ---> Kozdrowicki, Edward & Cooper, Dennis. (1973). COKO III: the Cooper-Koz chess program. Commun. ACM. 16. 411-427. 10.1145/362280.362288. 
 
 Discussed above of an implementationn in Fortran. 
+
+
+#### Bitboards
+
+64-bit sequence of bits (0 ir 1) -> indicates the absence or presence of samne state of each space on the board. A board can then be
+represented using a series of bitboards. 
+
+e.g. Series of bitboards for each piece type, for each side.
