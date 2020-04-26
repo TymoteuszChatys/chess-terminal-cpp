@@ -25,13 +25,13 @@ board::board()
     populate_out_of_range();
     std::string starting_fen{ "rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2" };
     position(starting_fen);
+
 }
 
 void board::populate_out_of_range()
 {
     for (size_t index{}; index < get_size(); index++) {
         if ((index >= 0 && index <= 20) || index >= 99 || (index - 1) % 10 == 8 || (index - 1) % 10 == 9) {
-            std::cout << "hi" << std::endl;
             board_representation[index] = 7;
         }
     }
@@ -39,8 +39,8 @@ void board::populate_out_of_range()
 
 void board::position(std::string FEN) {
     std::vector<std::string> splitted_fen = split(FEN, ' ');
+    size_t i{};
     int j = 1;
-    int i{};
     int file{};
     int rank{};
     char letter{};
@@ -64,51 +64,51 @@ void board::position(std::string FEN) {
         {
         case 'p':
             board_representation[square] = -1;
-            //new pawn(-1,square); 
+            pieces.push_back(std::unique_ptr<pawn>(new pawn(-1, square)));
             break;
         case 'n':
             board_representation[square] = -2;
-            // new knight(-1,square); 
+            pieces.push_back(std::unique_ptr<knight>(new knight(-1,square)));
             break;
         case 'b':
             board_representation[square] = -3;
-            //new bishop(-1,square); 
+            pieces.push_back(std::unique_ptr<bishop>(new bishop(-1, square)));
             break;
         case 'r':
             board_representation[square] = -4;
-            // new rook(-1,square); 
+            pieces.push_back(std::unique_ptr<rook>(new rook(-1, square)));
             break;
         case 'q':
             board_representation[square] = -5;
-            // new queen(-1,square); 
+            pieces.push_back(std::unique_ptr<queen>(new queen(-1, square)));
             break;
         case 'k':
             board_representation[square] = -6;
-            // new king(-1,square); 
+            pieces.push_back(std::unique_ptr<king>(new king(-1, square)));
             break;
         case 'P':
             board_representation[square] = 1;
-            // new pawn(1,square); 
+            pieces.push_back(std::unique_ptr<pawn>(new pawn(1, square)));
             break;
         case 'N':
             board_representation[square] = 2;
-            // new knight(1,square); 
+            pieces.push_back(std::unique_ptr<knight>(new knight(1, square)));
             break;
         case 'B':
             board_representation[square] = 3;
-            // new bishop(1,square); 
+            pieces.push_back(std::unique_ptr<bishop>(new bishop(1, square)));
             break;
         case 'R':
             board_representation[square] = 4;
-            // new rook(1,square); 
+            pieces.push_back(std::unique_ptr<rook>(new rook(1, square)));
             break;
         case 'Q':
             board_representation[square] = 5;
-            // new queen(1,square); 
+            pieces.push_back(std::unique_ptr<queen>(new queen(1, square)));
             break;
         case 'K':
             board_representation[square] = 6;
-            // new king(1,square); 
+            pieces.push_back(std::unique_ptr<king>(new king(1, square)));
             break;
         case '/':
             j--;
@@ -140,6 +140,20 @@ void board::position(std::string FEN) {
         j++;
     }
 }
+
+void board::print_pieces()
+{
+    std::cout << "Pieces in position: " << std::endl;
+    int piece_number{ 1 }; // counter 
+    for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
+        std::cout << "Piece " << piece_number << " ";
+        (*iterator)->print_piece_data();
+        piece_number++;
+    }
+}
+
+
+
 
 namespace chess {
     std::ostream& operator<<(std::ostream& out_stream, const board& the_board)

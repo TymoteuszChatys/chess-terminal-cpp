@@ -1,8 +1,16 @@
 #include<iostream>
 #include<string>
 #include "pieces.h"
+#include "board.h"
 
 using namespace chess;
+
+piece::piece(int the_colour, size_t the_position)
+{
+    colour = the_colour;
+    position = the_position;
+    std::cout << "Piece constructor" << std::endl;
+}
 
 std::string king::name()
 {
@@ -34,8 +42,8 @@ std::string pawn::name()
     return "pawn";
 }
 
-int piece::get_colour()
-{
-    return colour;
-}
 
+void piece::print_piece_data() 
+{// Print out pieces data
+    std::cout << get_colour<std::string>() << " " << name() << " at " <<  std::endl;
+}
