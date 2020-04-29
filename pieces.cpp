@@ -1,8 +1,9 @@
 #include<iostream>
 #include<string>
 #include<array>
-#include "pieces.h"
 #include "board.h"
+#include "pieces.h"
+#include "controller.h"
 
 using namespace chess;
 
@@ -82,12 +83,10 @@ template<typename colour_type> colour_type piece::get_colour()
 {
     if constexpr (std::is_same<colour_type, int>::value) {
         return colour;
-    }
-    else if constexpr (std::is_same<colour_type, std::string>::value) {
+    }else if constexpr (std::is_same<colour_type, std::string>::value) {
         if (colour == -1) {
             return "black";
-        }
-        else {
+        }else {
             return "white";
         }
     }
@@ -97,12 +96,16 @@ template<typename colour_type> colour_type piece::get_position()
 {
     if constexpr (std::is_same<colour_type, int>::value) {
         return position;
-    }
-    else if constexpr (std::is_same<colour_type, std::string>::value) {
+    }else if constexpr (std::is_same<colour_type, std::string>::value) {
         std::string notation = square_notation(position);
         return notation;
     }
 
+}
+
+int piece::set_position(int new_position)
+{
+    position = new_position;
 }
 
 

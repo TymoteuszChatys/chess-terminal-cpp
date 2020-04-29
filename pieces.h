@@ -8,6 +8,7 @@
 namespace chess
 {
     class board;
+    class controller;
     class piece
     {
     protected:
@@ -19,6 +20,7 @@ namespace chess
         virtual ~piece() {}
         template<typename colour_type> colour_type get_colour();
         template<typename colour_type> colour_type get_position();
+        int set_position(int new_position);
         virtual std::string name() = 0;
         virtual int tag() = 0;
         virtual std::vector<int> valid_moves(chess::board* the_board) = 0;

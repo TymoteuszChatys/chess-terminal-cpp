@@ -1,5 +1,6 @@
 #include "board.h"
 #include "pieces.h"
+#include "controller.h"
 
 using namespace chess;
 
@@ -47,19 +48,30 @@ size_t board::get_size() const
     return size;
 }
 
+std::vector<std::unique_ptr<piece>> board::get_pieces()
+{
+    return pieces;
+}
 
 int board::get_piece_at_position(int index)
 {
     return board_representation[index];
 }
 
-
-
 board::board()
 {
     board_representation = new int[size] {};
     populate_out_of_range();
-    std::string starting_fen{ "8/1P1P1P2/8/1P1K1p2/8/1P1p1p2/8/8 w - - 0 1" };
+    std::string starting_fen{ "r1bqkbnr/ppp1pppp/2n5/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq - 0 3" };
+    position(starting_fen);
+}
+
+board::board(controller &the_controller)
+{
+    board_controller = &the_controller;
+    board_representation = new int[size] {};
+    populate_out_of_range();
+    std::string starting_fen{ "r1bqkbnr/ppp1pppp/2n5/3p4/3P4/5N2/PPP1PPPP/RNBQKB1R w KQkq - 0 3" };
     position(starting_fen);
 }
 
@@ -72,7 +84,8 @@ void board::populate_out_of_range()
     }
 }
 
-void board::position(std::string FEN) {
+void board::position(std::string FEN) 
+{
     std::vector<std::string> splitted_fen = split(FEN, ' ');
     size_t i{};
     int j = 1;
@@ -103,7 +116,7 @@ void board::position(std::string FEN) {
             break;
         case 'n':
             board_representation[square] = -2;
-            pieces.push_back(std::unique_ptr<knight>(new knight(-1,square)));
+            pieces.push_back(std::unique_ptr<knight>(new knight(-1, square)));
             break;
         case 'b':
             board_representation[square] = -3;
@@ -174,6 +187,14 @@ void board::position(std::string FEN) {
         }
         j++;
     }
+    if (splitted_fen.size() >= 2) {
+        if (splitted_fen.at(1) == "w") {
+            board_controller->set_turn_to_move(1); //white
+        }
+        else if (splitted_fen.at(1) == "b") {
+            board_controller->set_turn_to_move(-1); //black
+        }
+    }
 }
 
 
@@ -198,6 +219,14 @@ void board::remove_piece(int position)
             break;
         }
     }
+    board_representation[position] = 0;
+}
+
+void board::move_piece(int position)
+{
+
+
+
 }
 
 void board::print_valid_moves(int position)
@@ -224,24 +253,66 @@ void board::print_valid_moves(int position)
     }
 }
 
+std::string board::whose_turn_to_move() 
+{
+    std::string human_colour{};
+    int colour = board_controller->get_turn_to_move();
+    if (colour == 1) {
+        human_colour = "white";
+    }else if (colour == -1){
+        human_colour = "black";
+    }
+    return human_colour;
+}
 
-namespace chess {
+namespace chess 
+{
+
+    std::string human_output(int computer_output) 
+    {
+        std::string human_output{};
+        switch (computer_output) {
+        case 0: human_output = " "; break;
+        case 1: human_output = "P"; break;
+        case -1: human_output = "p"; break;
+        case 2: human_output = "N"; break;
+        case -2: human_output = "n"; break;
+        case 3: human_output = "B"; break;
+        case -3: human_output = "b"; break;
+        case 4: human_output = "R"; break;
+        case -4: human_output = "r"; break;
+        case 5: human_output = "Q"; break;
+        case -5: human_output = "q"; break;
+        case 6: human_output = "K"; break;
+        case -6: human_output = "k"; break;
+        case 7: human_output = ""; break;
+        }
+
+        return human_output;
+    }
+
+
+
+
     std::ostream& operator<<(std::ostream& out_stream, const board& the_board)
     {
+        std::cout << "|";
         if (the_board.get_size() > 0) {
             for (size_t mirror_index{ the_board.get_size() / 10 }; mirror_index > 0; mirror_index--) {
                 for (size_t index{ (mirror_index - 1) * 10 }; index < mirror_index * 10; index++) {
-                    if ((index + 1) % 10 == 0) {
-                        out_stream << the_board.board_representation[index] << std::endl;
-                    }
-                    else {
-                        out_stream << the_board.board_representation[index] << ";";
+                    if (the_board.board_representation[index] != 7) {
+                        if ((index + 2) % 10 == 0 && index > 30 && index < 99) {
+                            out_stream << human_output(the_board.board_representation[index]) << "|" << std::endl << "|";
+                        }else if (index > 20 && index < 99) {
+                            out_stream << human_output(the_board.board_representation[index]) << ";";
+                        }else{
+                            out_stream << human_output(the_board.board_representation[index]) << "|" << std::endl;
+                        }
                     }
                 }
             }
 
-        }
-        else {
+        }else {
             out_stream << "board is empty" << std::endl;
         }
         return out_stream;
