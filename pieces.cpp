@@ -97,13 +97,13 @@ template<typename colour_type> colour_type piece::get_position()
     if constexpr (std::is_same<colour_type, int>::value) {
         return position;
     }else if constexpr (std::is_same<colour_type, std::string>::value) {
-        std::string notation = square_notation(position);
+        std::string notation = square_notation_to_human(position);
         return notation;
     }
 
 }
 
-int piece::set_position(int new_position)
+void piece::set_position(int new_position)
 {
     position = new_position;
 }
@@ -232,7 +232,7 @@ std::vector<int> rook::valid_moves(chess::board* the_board)
 {
     //http://www.chesscorner.com/tutorial/basic/rook/rook.htm
     //The rook moves horizontally or vertically, through any number of unoccupied squares
-    std::vector<int> possible_moves = diagonal_check(this, the_board);
+    std::vector<int> possible_moves = horizontal_and_vertical_check(this, the_board);
     return possible_moves;
 }
 
@@ -240,7 +240,7 @@ std::vector<int> bishop::valid_moves(chess::board* the_board)
 {
     //http://www.chesscorner.com/tutorial/basic/bishop/bishop.htm
     //The bishop has no restrictions in distance for each move, but is limited to diagonal movement
-    std::vector<int> possible_moves = horizontal_and_vertical_check(this, the_board);
+    std::vector<int> possible_moves = diagonal_check(this, the_board);
     return possible_moves;
 }
 

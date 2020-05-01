@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+
+
 namespace chess
 {
     class piece;
@@ -12,6 +14,8 @@ namespace chess
     {
     private:
         int turn_to_move{};
+        int turn_number{};
+        int ply{};
         std::vector<std::string> move_history{};
     public:
         //default constructor, starting position.
@@ -21,10 +25,19 @@ namespace chess
         void add_move(int initial_position, int final_position);
         void print_move_history();
         int get_turn_to_move();
+        int get_turn_number();
+        int get_ply();
+        void set_turn_number(int the_turn_number);
+        void set_ply(int the_ply);
+        void add_turn_number();
+        void add_ply();
         void set_turn_to_move(int colour);
         void change_turn_to_move();
 
-        //void make_move(int initial_position, int final_position, board* the_board);
+        std::vector<int> enter_move();
+        void make_move(int initial_position, int final_position, board* the_board);
+
+        void each_turn(board* the_board);
 
         //to include
         //white king castle
