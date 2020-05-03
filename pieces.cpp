@@ -113,6 +113,20 @@ void piece::set_position(int new_position)
 //Valid Moves//
 ///////////////
 
+std::vector<int> check_moves_validity_for_self_check(std::vector<int> initial_moves, chess::board* the_board)
+{
+    std::vector<int> moves_possible;
+    for (const auto& move : initial_moves) {
+        int* temporary_board_representation = the_board->get_board_representation();
+        board temporary_board(temporary_board_representation);
+
+
+        
+    }
+    return moves_possible;
+}
+
+
 
 //Diagonal function check for Bishops and Queens.
 std::vector<int> diagonal_check(chess::piece* the_piece, chess::board* the_board)
@@ -120,7 +134,7 @@ std::vector<int> diagonal_check(chess::piece* the_piece, chess::board* the_board
     int current_position = the_piece->get_position<int>();
 
     std::array<int, 4> diagonal_directions = { 11,9,-11,-9 };
-    std::vector<int> allowed_pieces_to_take = { 0,1,2,3,4,5 };
+    std::vector<int> allowed_pieces_to_take = { 0,1,2,3,4,5,6 };
     std::vector<int> possible_moves;
 
     for (const auto& allowed_move : diagonal_directions) {
@@ -131,7 +145,6 @@ std::vector<int> diagonal_check(chess::piece* the_piece, chess::board* the_board
             if (std::any_of(allowed_pieces_to_take.begin(), allowed_pieces_to_take.end(), [&](int piece)
                 {
                     if (the_board->get_piece_at_position(current_position + changing_allowed_move) == piece * -1 * the_piece->get_colour<int>()) {
-                        std::cout << current_position + changing_allowed_move << std::endl;
                         return true;
                     }else {
                         good_move_check = false;
@@ -144,6 +157,7 @@ std::vector<int> diagonal_check(chess::piece* the_piece, chess::board* the_board
             changing_allowed_move = changing_allowed_move + allowed_move;
         }
     }
+
     return possible_moves;
 }
 
@@ -153,7 +167,7 @@ std::vector<int> horizontal_and_vertical_check(chess::piece* the_piece, chess::b
     int current_position = the_piece->get_position<int>();
 
     std::array<int, 4> diagonal_directions = { 10,1,-10,-1 };
-    std::vector<int> allowed_pieces_to_take = { 0,1,2,3,4,5 };
+    std::vector<int> allowed_pieces_to_take = { 0,1,2,3,4,5,6 };
     std::vector<int> possible_moves;
 
     for (const auto& allowed_move : diagonal_directions) {
@@ -164,7 +178,6 @@ std::vector<int> horizontal_and_vertical_check(chess::piece* the_piece, chess::b
             if (std::any_of(allowed_pieces_to_take.begin(), allowed_pieces_to_take.end(), [&](int piece)
                 {
                     if (the_board->get_piece_at_position(current_position + changing_allowed_move) == piece * -1 * the_piece->get_colour<int>()) {
-                        std::cout << current_position + changing_allowed_move << std::endl;
                         return true;
                     }
                     else {
@@ -191,7 +204,7 @@ std::vector<int> king::valid_moves(chess::board* the_board)
     //A king can move one square in any direction (horizontally, vertically, or diagonally) 
     //unless the square is already occupied by a friendly piece or the move would place the king in check
     std::array<int, 8> king_moves = { 9,10,11,1,-9,-10,-11,-1 };
-    std::vector<int> allowed_pieces_to_take = { 0,1,2,3,4,5 };
+    std::vector<int> allowed_pieces_to_take = { 0,1,2,3,4,5,6 };
     std::vector<int> possible_moves;
 
     for (const auto& allowed_move : king_moves) {
@@ -250,7 +263,7 @@ std::vector<int> knight::valid_moves(chess::board* the_board)
     //http://www.chesscorner.com/tutorial/basic/knight/knight.htm
     //It moves to a square that is two squares away horizontally and one square vertically, or two squares vertically and one square horizontally
     std::array<int,8> knight_moves = {8,12,19,21,-8,-12,-19,-21};
-    std::vector<int> allowed_pieces_to_take = {0,1,2,3,4,5};
+    std::vector<int> allowed_pieces_to_take = {0,1,2,3,4,5,6};
     std::vector<int> possible_moves;
 
     for (const auto& allowed_move : knight_moves) {
@@ -282,7 +295,7 @@ std::vector<int> pawn::valid_moves(chess::board* the_board)
     //the pawn does not capture in the same direction that it moves. A pawn captures diagonally forward one square to the left or right
     //so extensive checks have to be done to permit all these possibilities
     std::array<int, 4> pawn_moves = {9,10,11,20}; 
-    std::vector<int> allowed_pieces_to_take_diagonal = { 1,2,3,4,5 };
+    std::vector<int> allowed_pieces_to_take_diagonal = { 1,2,3,4,5,6 };
     std::vector<int> possible_moves;
 
     //If black, pieces move backwards in the view of the white player

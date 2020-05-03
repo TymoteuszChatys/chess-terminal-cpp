@@ -1,22 +1,20 @@
-#include <windows.h>
-#include "board.h"
+﻿#include "board.h"
 #include "pieces.h"
 #include "controller.h"
 #include "ctype.h"
-
 #include <cctype>
 
-HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 //Colours
-#define GREEN_F		(SetConsoleTextAttribute(hConsole, FOREGROUND_GREEN))  //sets the console colour to green
-#define RED_F		(SetConsoleTextAttribute(hConsole, FOREGROUND_RED))  //sets the console colour to red
-#define BLUE_F		(SetConsoleTextAttribute(hConsole, FOREGROUND_BLUE)) //sets the console colour to blue
-#define WHITE_F		(SetConsoleTextAttribute(hConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN)) //defines the colour white
+HANDLE boardConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+#define GREEN_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_GREEN))  //sets the console colour to green
+#define RED_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_RED))  //sets the console colour to red
+#define BLUE_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_BLUE)) //sets the console colour to blue
+#define WHITE_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN)) //defines the colour white
+
 
 
 using namespace chess;
 
-int* board::board_representation{ nullptr };
 
 std::string square_notation_to_human(int square) 
 {
@@ -50,7 +48,7 @@ constexpr unsigned int string_to_integer(const char* string, int h = 0)
 
 int square_notation_to_computer(std::string square)
 {
-    //function to associate computer array to human notation. Not all array numbers are associated with a square.
+    //function to associate human notation to a numerical value;
     int computer_notation{};
     switch (string_to_integer(square.c_str())) {
     case string_to_integer("a1"): computer_notation = 21; break; case string_to_integer("a2"): computer_notation = 31; break; 
@@ -118,6 +116,11 @@ int board::get_piece_at_position(int index)
     return board_representation[index];
 }
 
+int* board::get_board_representation() 
+{
+    return board_representation;
+}
+
 board::board()
 {
     board_representation = new int[size] {};
@@ -133,6 +136,28 @@ board::board(controller *the_controller)
     populate_out_of_range();
     std::string starting_fen{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
     position(starting_fen);
+}
+
+
+//Copy constructor
+board::board(const board& a_board) : size(a_board.size)
+{
+    std::vector<std::shared_ptr<piece>> original = a_board.pieces;
+
+    pieces.reserve(a_board.pieces.size());
+    for (const auto& i : a_board.pieces) {
+        pieces.push_back(std::make_shared<piece>(*i));
+    }
+
+    
+
+
+
+}
+
+board::board(int* board_diagram) : board_representation( board_diagram ) 
+{
+
 }
 
 void board::populate_out_of_range()
@@ -304,13 +329,16 @@ void board::print_valid_moves(int position)
     }
 
     if (this_piece_valid_moves.size() != 0) {
-        std::cout << "Possible moves for " << pieces.at(position_in_piece_vector)->name() << " at " << pieces.at(position_in_piece_vector)->get_position<std::string>() << std::endl;
+        std::cout << "Possible moves for " << pieces.at(position_in_piece_vector)->name() << " at " << pieces.at(position_in_piece_vector)->get_position<std::string>() << ":  ";
         for (auto iterator = this_piece_valid_moves.begin(); iterator != this_piece_valid_moves.end(); iterator++) {
-            std::cout << square_notation_to_human(*iterator) << std::endl;
+            GREEN_F;
+            std::cout << square_notation_to_human(*iterator) << " ";
+            WHITE_F;
         }
     }else {
-        std::cout << "Error: no moves from: " << square_notation_to_human(position) << std::endl;
+        std::cout << "Error: no moves from " << square_notation_to_human(position);
     }
+    std::cout << std::endl;
 }
 
 std::string board::whose_turn_to_move() 
@@ -410,5 +438,39 @@ namespace chess
         }
         return out_stream;
     }
+
+    bool board::is_king_in_check(int colour)
+    {
+        std::shared_ptr<piece> the_king;
+        bool in_check{ false };
+        int position_in_piece_vector{};
+
+        //Get the king piece
+        for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
+            int tag = (*iterator)->tag();
+            if (tag == colour * 6) {
+                the_king = (*iterator);
+                break;
+            }
+        }
+
+   
+        //Check if any opponent piece can take it if it were its move. If it is. The king is in check.
+        std::vector<int> this_piece_valid_moves;
+        for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
+            int piece_colour = (*iterator)->get_colour<int>();
+            if (piece_colour == colour * -1) {
+                this_piece_valid_moves = (*iterator)->valid_moves(this);
+                for (auto iterator = this_piece_valid_moves.begin(); iterator != this_piece_valid_moves.end(); iterator++) {
+                    if ((*iterator) == the_king->get_position<int>()) {
+                        in_check = true;
+                    }
+                }   
+            }           
+        }
+        return in_check;
+    }
 }
+
+
 

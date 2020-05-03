@@ -2,6 +2,14 @@
 #include "pieces.h"
 #include "controller.h"
 #include<cmath>
+#include<windows.h>
+
+//Colours
+HANDLE controllerConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+#define GREEN_F		(SetConsoleTextAttribute(controllerConsole, FOREGROUND_GREEN))  //sets the console colour to green
+#define RED_F		(SetConsoleTextAttribute(controllerConsole, FOREGROUND_RED))  //sets the console colour to red
+#define BLUE_F		(SetConsoleTextAttribute(controllerConsole, FOREGROUND_BLUE)) //sets the console colour to blue
+#define WHITE_F		(SetConsoleTextAttribute(controllerConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN)) //defines the colour white
 
 
 using namespace chess;
@@ -28,11 +36,18 @@ void controller::each_turn(board* the_board)
     this->print_move_history();
     std::cout << std::endl;
     bool valid_move{ false };
+    if (the_board->is_king_in_check(get_turn_to_move()) == true) {
+        GREEN_F; std::cout << the_board->whose_turn_to_move() << "'s king is in check" << std::endl; WHITE_F;
+    }
     while (valid_move == false) {
         std::cout << the_board->whose_turn_to_move() << "'s turn to move. Enter your move: ";
-        std::vector<int> moves = enter_move();
+        std::vector<int> moves = enter_move(the_board);
         if (moves.at(1) == -101) {
             the_board->print_valid_moves(moves.at(0));
+        }else if (moves.at(1) == -102) {
+            std::cout << "No valid move was entered. Enter square e.g e2 for information about available placements." << std::endl;
+        }else if (moves.at(1) == -110) {
+            std::cout << "Error: You can only move " << the_board->whose_turn_to_move() << " pieces" << std::endl;
         }else {
             this->make_move(moves.at(0), moves.at(1), the_board);
             valid_move = true;
@@ -114,15 +129,20 @@ void controller::print_move_history()
     }
 }
 
-std::vector<int> controller::enter_move() 
+std::vector<int> controller::enter_move(board* the_board)
 {
     std::vector<int> initial_and_final_moves;
     std::string moves;
     getline(std::cin, moves);
     if (moves.length() == 4) {
         std::vector<std::string> move_vector = split_string(moves, 2);
-        initial_and_final_moves.push_back(square_notation_to_computer(move_vector.at(0)));
-        initial_and_final_moves.push_back(square_notation_to_computer(move_vector.at(1)));
+        if ((the_board->get_piece_at_position(square_notation_to_computer(move_vector.at(0))))*get_turn_to_move()>0) {
+            initial_and_final_moves.push_back(square_notation_to_computer(move_vector.at(0)));
+            initial_and_final_moves.push_back(square_notation_to_computer(move_vector.at(1)));
+        }else {
+            initial_and_final_moves.push_back(-1);
+            initial_and_final_moves.push_back(-110);
+        }
     }
     else if (moves.length() == 2) {
         initial_and_final_moves.push_back(square_notation_to_computer(moves));
@@ -130,7 +150,7 @@ std::vector<int> controller::enter_move()
     }
     else {
         initial_and_final_moves.push_back(-1);
-        initial_and_final_moves.push_back(-1);
+        initial_and_final_moves.push_back(-102);
     }
 
 
@@ -176,3 +196,5 @@ void controller::make_move(int initial_position, int final_position, board *the_
     }
 
 }
+
+

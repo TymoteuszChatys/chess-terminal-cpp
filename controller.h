@@ -34,7 +34,7 @@ namespace chess
         void set_turn_to_move(int colour);
         void change_turn_to_move();
 
-        std::vector<int> enter_move();
+        std::vector<int> enter_move(board* the_board);
         void make_move(int initial_position, int final_position, board* the_board);
 
         void each_turn(board* the_board);
