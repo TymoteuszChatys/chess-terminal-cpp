@@ -7,6 +7,17 @@
 
 using namespace chess;
 
+struct compare
+{
+    int key;
+    compare(int const& i) : key(i) {}
+
+    bool operator()(int const& i)
+    {
+        return (i == key);
+    }
+};
+
 
 piece::piece(int the_colour, size_t the_position)
 {
@@ -113,17 +124,36 @@ void piece::set_position(int new_position)
 //Valid Moves//
 ///////////////
 
-std::vector<int> check_moves_validity_for_self_check(std::vector<int> initial_moves, chess::board* the_board)
+std::vector<int> check_moves_validity_for_self_check(int position, std::vector<int> moves, chess::board& the_board)
 {
-    std::vector<int> moves_possible;
-    for (const auto& move : initial_moves) {
-        int* temporary_board_representation = the_board->get_board_representation();
-        board temporary_board(temporary_board_representation);
-
-
-        
+    int move_number{};
+    std::vector<int> allowed_moves = moves;
+    for (auto move = allowed_moves.begin(); move != allowed_moves.end();){
+        chess::controller global_controller;
+        board temporary_board(the_board, &global_controller);
+        std::shared_ptr<piece> the_piece;
+        std::vector<std::shared_ptr<piece>> temporary_board_pieces = temporary_board.get_pieces();
+        for (auto iterator = temporary_board_pieces.begin(); iterator != temporary_board_pieces.end(); iterator++) {
+            if ((*iterator)->get_position<int>() == position) {
+                the_piece = (*iterator);
+                break;
+            }
+        }
+        for (auto iterator = temporary_board_pieces.begin(); iterator != temporary_board_pieces.end(); iterator++) {
+            if ((*iterator)->get_position<int>() == moves.at(move_number)) {
+                temporary_board.remove_piece((*iterator)->get_position<int>());
+            }
+        }
+        temporary_board.move_piece(moves.at(move_number), the_piece);
+        bool in_check = temporary_board.is_king_in_check(the_piece->get_colour<int>());
+        if (in_check == true) {
+            move = allowed_moves.erase(move);
+        }else {
+            ++move;
+        }
+        move_number++;
     }
-    return moves_possible;
+    return allowed_moves;
 }
 
 
@@ -157,7 +187,7 @@ std::vector<int> diagonal_check(chess::piece* the_piece, chess::board* the_board
             changing_allowed_move = changing_allowed_move + allowed_move;
         }
     }
-
+    
     return possible_moves;
 }
 
@@ -196,8 +226,14 @@ std::vector<int> horizontal_and_vertical_check(chess::piece* the_piece, chess::b
 
 
 
-
 std::vector<int> king::valid_moves(chess::board* the_board)
+{
+    std::vector<int> possible_moves = valid_moves_before_check(the_board);
+    std::vector<int> moves = check_moves_validity_for_self_check(this->get_position<int>(), possible_moves, *the_board);
+    return moves;
+}
+
+std::vector<int> king::valid_moves_before_check(chess::board* the_board)
 {
     int current_position = get_position<int>();
     //http://www.chesscorner.com/tutorial/basic/king/king.htm
@@ -223,10 +259,38 @@ std::vector<int> king::valid_moves(chess::board* the_board)
         }
 
     }
+
+    //castling needs to be handled independently due to its complexity
+    if ((this->get_colour<int>() == 1 && the_board->get_white_castle_king() == true) || (this->get_colour<int>() == -1 && the_board->get_black_castle_king() == true)) {
+        int key = 1 + current_position;
+        if (std::any_of(possible_moves.begin(), possible_moves.end(), compare(key))) {
+            if (the_board->get_piece_at_position(key+1) == 0) {
+                possible_moves.push_back(key + 1);
+            }
+        }       
+    }
+
+    if ((this->get_colour<int>() == 1 && the_board->get_white_castle_queen() == true) || (this->get_colour<int>() == -1 && the_board->get_black_castle_queen() == true)) {
+        int key = -1 + current_position;
+        if (std::any_of(possible_moves.begin(), possible_moves.end(), compare(key))) {
+            if (the_board->get_piece_at_position(key-1) == 0 || the_board->get_piece_at_position(key - 2) == 0) {
+                possible_moves.push_back(key - 1);
+            }
+        }
+    }
+        
     return possible_moves;
 }
 
+
 std::vector<int> queen::valid_moves(chess::board* the_board)
+{
+    std::vector<int> possible_moves = valid_moves_before_check(the_board);
+    std::vector<int> moves = check_moves_validity_for_self_check(this->get_position<int>(), possible_moves, *the_board);
+    return moves;
+}
+
+std::vector<int> queen::valid_moves_before_check(chess::board* the_board)
 {
     //http://www.chesscorner.com/tutorial/basic/queen/queen.htm
     //The queen can be moved any number of unoccupied squares in a straight line vertically, horizontally, or diagonally, 
@@ -241,7 +305,17 @@ std::vector<int> queen::valid_moves(chess::board* the_board)
     return possible_moves;
 }
 
+
+
+
 std::vector<int> rook::valid_moves(chess::board* the_board)
+{
+    std::vector<int> possible_moves = valid_moves_before_check(the_board);
+    std::vector<int> moves = check_moves_validity_for_self_check(this->get_position<int>(), possible_moves, *the_board);
+    return moves;
+}
+
+std::vector<int> rook::valid_moves_before_check(chess::board* the_board)
 {
     //http://www.chesscorner.com/tutorial/basic/rook/rook.htm
     //The rook moves horizontally or vertically, through any number of unoccupied squares
@@ -251,6 +325,13 @@ std::vector<int> rook::valid_moves(chess::board* the_board)
 
 std::vector<int> bishop::valid_moves(chess::board* the_board)
 {
+    std::vector<int> possible_moves = valid_moves_before_check(the_board);
+    std::vector<int> moves = check_moves_validity_for_self_check(this->get_position<int>(), possible_moves, *the_board);
+    return moves;
+}
+
+std::vector<int> bishop::valid_moves_before_check(chess::board* the_board)
+{
     //http://www.chesscorner.com/tutorial/basic/bishop/bishop.htm
     //The bishop has no restrictions in distance for each move, but is limited to diagonal movement
     std::vector<int> possible_moves = diagonal_check(this, the_board);
@@ -258,6 +339,13 @@ std::vector<int> bishop::valid_moves(chess::board* the_board)
 }
 
 std::vector<int> knight::valid_moves(chess::board* the_board)
+{
+    std::vector<int> possible_moves = valid_moves_before_check(the_board);
+    std::vector<int> moves = check_moves_validity_for_self_check(this->get_position<int>(), possible_moves, *the_board);
+    return moves;
+}
+
+std::vector<int> knight::valid_moves_before_check(chess::board* the_board)
 {
     int current_position = get_position<int>();
     //http://www.chesscorner.com/tutorial/basic/knight/knight.htm
@@ -287,6 +375,13 @@ std::vector<int> knight::valid_moves(chess::board* the_board)
 }
 
 std::vector<int> pawn::valid_moves(chess::board* the_board)
+{
+    std::vector<int> possible_moves = valid_moves_before_check(the_board);
+    std::vector<int> moves = check_moves_validity_for_self_check(this->get_position<int>(), possible_moves, *the_board);
+    return moves;
+}
+
+std::vector<int> pawn::valid_moves_before_check(chess::board* the_board)
 {
     int current_position = get_position<int>();
     bool one_step_valid{false}; 
@@ -341,3 +436,5 @@ std::vector<int> pawn::valid_moves(chess::board* the_board)
     }
     return possible_moves;
 }
+
+

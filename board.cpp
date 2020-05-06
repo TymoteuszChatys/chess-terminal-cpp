@@ -87,7 +87,28 @@ int square_notation_to_computer(std::string square)
     return computer_notation;
 }
 
+std::string human_output(int computer_output)
+{
+    std::string human_output{};
+    switch (computer_output) {
+    case 0: human_output = " "; break;
+    case 1: human_output = "P"; break;
+    case -1: human_output = "p"; break;
+    case 2: human_output = "N"; break;
+    case -2: human_output = "n"; break;
+    case 3: human_output = "B"; break;
+    case -3: human_output = "b"; break;
+    case 4: human_output = "R"; break;
+    case -4: human_output = "r"; break;
+    case 5: human_output = "Q"; break;
+    case -5: human_output = "q"; break;
+    case 6: human_output = "K"; break;
+    case -6: human_output = "k"; break;
+    case 7: human_output = ""; break;
+    }
 
+    return human_output;
+}
 
 
 std::vector<std::string> split(std::string str, char delimiter) 
@@ -121,6 +142,66 @@ int* board::get_board_representation()
     return board_representation;
 }
 
+std::string board::get_fen() const
+{
+    std::string fen;
+    if (get_size() > 0) {
+        for (size_t mirror_index{ (get_size() / 10)-2 }; mirror_index > 2; mirror_index--) {
+            size_t number{};
+            for (size_t index{ (mirror_index - 1) * 10 }; index < mirror_index * 10; index++) {
+                if (board_representation[index] != 7) {
+                    if (board_representation[index] == 0) {
+                        number++;
+                    }
+                    else {
+                        if (number != 0) {
+                            fen = fen + std::to_string(number);
+                            fen = fen + human_output(board_representation[index]);
+                            number = 0;
+                        }
+                        else {
+                            fen = fen + human_output(board_representation[index]);
+                        }
+                    }
+                }
+            
+            }
+            if (number != 0) {
+                fen = fen + std::to_string(number);
+            }
+            fen = fen + "/";
+            
+        }
+        if (!fen.empty()) {
+            fen.pop_back();
+        }
+        int turn_to_move = board_controller->get_turn_to_move();
+        if (turn_to_move == 1) {
+            fen = fen + " w";
+        }else if (turn_to_move == -1) {
+            fen = fen + " b";
+        }
+
+        fen = fen + " ";
+
+        if (white_castle_king == true) {
+            fen = fen + "K";
+        }
+        if (white_castle_queen == true) {
+            fen = fen + "Q";
+        }
+        if (black_castle_king == true) {
+            fen = fen + "k";
+        }
+        if (black_castle_queen == true) {
+            fen = fen + "q";
+        }
+    }
+    return fen;
+}
+
+
+
 board::board()
 {
     board_representation = new int[size] {};
@@ -140,25 +221,14 @@ board::board(controller *the_controller)
 
 
 //Copy constructor
-board::board(const board& a_board) : size(a_board.size)
+board::board(const board& a_board, controller *a_controller)
 {
-    std::vector<std::shared_ptr<piece>> original = a_board.pieces;
-
-    pieces.reserve(a_board.pieces.size());
-    for (const auto& i : a_board.pieces) {
-        pieces.push_back(std::make_shared<piece>(*i));
-    }
-
-    
-
-
-
+    board_controller = a_controller;
+    board_representation = new int[size] {};
+    populate_out_of_range();
+    position(a_board.get_fen());
 }
 
-board::board(int* board_diagram) : board_representation( board_diagram ) 
-{
-
-}
 
 void board::populate_out_of_range()
 {
@@ -169,6 +239,7 @@ void board::populate_out_of_range()
     }
 }
 
+//FEN string parser. Takes in the FEN strings and makes the baord as appropriate.
 void board::position(std::string FEN) 
 {
     std::vector<std::string> splitted_fen = split(FEN, ' ');
@@ -280,6 +351,29 @@ void board::position(std::string FEN)
             board_controller->set_turn_to_move(-1); //black
         }
     }
+
+    set_white_castle_king(true);
+    set_white_castle_queen(true);
+    set_black_castle_king(true);
+    set_black_castle_queen(true);
+
+    if (splitted_fen.size() >= 3){ 
+        if (splitted_fen.at(2).find('K') == std::string::npos) {
+            set_white_castle_king(false);
+        }
+
+        if (splitted_fen.at(2).find('Q') == std::string::npos) {
+            set_white_castle_queen(false);
+        }
+
+        if (splitted_fen.at(2).find('k') == std::string::npos) {
+            set_black_castle_king(false);
+        }
+
+        if (splitted_fen.at(2).find('q') == std::string::npos) {
+            set_black_castle_queen(false);
+        } 
+    }
 }
 
 
@@ -353,34 +447,64 @@ std::string board::whose_turn_to_move()
     return human_colour;
 }
 
+bool board::get_white_castle_king()
+{
+    return white_castle_king;
+}
+
+bool board::get_white_castle_queen()
+{
+    return white_castle_queen;
+}
+
+bool board::get_black_castle_king()
+{
+    return black_castle_king;
+}
+
+bool board::get_black_castle_queen()
+{
+    return black_castle_queen;
+}
+
+void board::set_white_castle_king(bool true_or_false) 
+{
+    if (true_or_false == true) {
+        white_castle_king = true;
+    }else {
+        white_castle_king = false;
+    }
+}
+
+void board::set_white_castle_queen(bool true_or_false)
+{
+    if (true_or_false == true) {
+        white_castle_queen = true;
+    }else {
+        white_castle_queen = false;
+    }
+}
+
+void board::set_black_castle_king(bool true_or_false)
+{
+    if (true_or_false == true) {
+        black_castle_king = true;
+    }else {
+        black_castle_king = false;
+    }
+}
+
+void board::set_black_castle_queen(bool true_or_false)
+{
+    if (true_or_false == true) {
+        black_castle_queen = true;
+    }else {
+        black_castle_queen = false;
+    }
+}
+
 namespace chess 
 {
-
-    std::string human_output(int computer_output) 
-    {
-        std::string human_output{};
-        switch (computer_output) {
-        case 0: human_output = " "; break;
-        case 1: human_output = "P"; break;
-        case -1: human_output = "p"; break;
-        case 2: human_output = "N"; break;
-        case -2: human_output = "n"; break;
-        case 3: human_output = "B"; break;
-        case -3: human_output = "b"; break;
-        case 4: human_output = "R"; break;
-        case -4: human_output = "r"; break;
-        case 5: human_output = "Q"; break;
-        case -5: human_output = "q"; break;
-        case 6: human_output = "K"; break;
-        case -6: human_output = "k"; break;
-        case 7: human_output = ""; break;
-        }
-
-        return human_output;
-    }
-
-
-
 
     std::ostream& operator<<(std::ostream& out_stream, const board& the_board)
     {
@@ -460,7 +584,7 @@ namespace chess
         for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
             int piece_colour = (*iterator)->get_colour<int>();
             if (piece_colour == colour * -1) {
-                this_piece_valid_moves = (*iterator)->valid_moves(this);
+                this_piece_valid_moves = (*iterator)->valid_moves_before_check(this);
                 for (auto iterator = this_piece_valid_moves.begin(); iterator != this_piece_valid_moves.end(); iterator++) {
                     if ((*iterator) == the_king->get_position<int>()) {
                         in_check = true;
@@ -470,6 +594,7 @@ namespace chess
         }
         return in_check;
     }
+
 }
 
 

@@ -66,7 +66,8 @@ void player_vs_player()
 	chess::board global_board(&global_controller);
 
 	for (auto i = 0; i < 999; i++) {
-		std::cout << "Mode: Player vs Player " << std::endl;
+		std::cout << "Mode: Player vs Player "<< std::endl;
+		std::cout << "FEN: " << global_board.get_fen() << std::endl;
 		global_controller.each_turn(&global_board);
 	}
 }

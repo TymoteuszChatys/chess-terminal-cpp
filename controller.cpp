@@ -118,15 +118,15 @@ void controller::add_move(int initial_position, int final_position)
 
 void controller::print_move_history()
 {
-    std::cout << "move history: " << std::endl;
-    double move_number{1}; // counter 
-    for (auto iterator = move_history.begin(); iterator != move_history.end(); iterator++) {
-        if (fmod(move_number, 1.0) == 0) {
-            std::cout << move_number << ".";
-        }
-        std::cout << *iterator << " ";
-        move_number = move_number + 0.5;
+std::cout << "move history: " << std::endl;
+double move_number{ 1 }; // counter 
+for (auto iterator = move_history.begin(); iterator != move_history.end(); iterator++) {
+    if (fmod(move_number, 1.0) == 0) {
+        std::cout << move_number << ".";
     }
+    std::cout << *iterator << " ";
+    move_number = move_number + 0.5;
+}
 }
 
 std::vector<int> controller::enter_move(board* the_board)
@@ -136,19 +136,17 @@ std::vector<int> controller::enter_move(board* the_board)
     getline(std::cin, moves);
     if (moves.length() == 4) {
         std::vector<std::string> move_vector = split_string(moves, 2);
-        if ((the_board->get_piece_at_position(square_notation_to_computer(move_vector.at(0))))*get_turn_to_move()>0) {
+        if ((the_board->get_piece_at_position(square_notation_to_computer(move_vector.at(0)))) * get_turn_to_move() > 0) {
             initial_and_final_moves.push_back(square_notation_to_computer(move_vector.at(0)));
             initial_and_final_moves.push_back(square_notation_to_computer(move_vector.at(1)));
         }else {
             initial_and_final_moves.push_back(-1);
             initial_and_final_moves.push_back(-110);
         }
-    }
-    else if (moves.length() == 2) {
+    }else if (moves.length() == 2) {
         initial_and_final_moves.push_back(square_notation_to_computer(moves));
         initial_and_final_moves.push_back(-101);
-    }
-    else {
+    }else {
         initial_and_final_moves.push_back(-1);
         initial_and_final_moves.push_back(-102);
     }
@@ -159,15 +157,15 @@ std::vector<int> controller::enter_move(board* the_board)
 
 
 
-void controller::make_move(int initial_position, int final_position, board *the_board)
+void controller::make_move(int initial_position, int final_position, board* the_board)
 {
     std::shared_ptr<piece> the_piece;
-    bool legal_move{false};
+    bool legal_move{ false };
     std::vector<std::shared_ptr<piece>> the_pieces = the_board->get_pieces();
     for (auto iterator = the_pieces.begin(); iterator != the_pieces.end(); iterator++) {
 
         if ((*iterator)->get_position<int>() == initial_position) {
-            
+
             for (const auto& allowed_move : (*iterator)->valid_moves(the_board)) {
                 if (allowed_move == final_position) {
                     legal_move = true;
@@ -185,13 +183,54 @@ void controller::make_move(int initial_position, int final_position, board *the_
             }
         }
         the_board->move_piece(final_position, the_piece);
+        
+
+        //no castling rights after king has moved
+        if (the_piece->tag() == 6) {
+            the_board->set_white_castle_king(false);
+            the_board->set_white_castle_queen(false);
+        }else if (the_piece->tag() == -6) {
+            the_board->set_black_castle_king(false);
+            the_board->set_black_castle_queen(false);
+        }
+
+        //no castling rights if rook has moved from initial position
+        if (abs(the_piece->tag()) == 4) {
+            if (initial_position == 21) {
+                the_board->set_white_castle_queen(false);
+            }else if (initial_position == 28) {
+                the_board->set_white_castle_king(false);
+            }else if (initial_position == 91) {
+                the_board->set_black_castle_queen(false);
+            }else if (initial_position == 98) {
+                the_board->set_black_castle_king(false);
+            }
+        }
+
+        //castling only, moving the rook.
+        if (abs(the_piece->tag()) == 6 && abs(final_position - initial_position) == 2) {
+            std::shared_ptr<piece> the_rook;
+            for (auto iterator = the_pieces.begin(); iterator != the_pieces.end(); iterator++) {
+                if ((*iterator)->get_position<int>() == final_position + 1) {
+                    the_rook = (*iterator);
+                    the_board->move_piece(final_position - 1, the_rook);
+                    break;
+                }else if ((*iterator)->get_position<int>() == final_position - 2) {
+                    the_rook = (*iterator);
+                    the_board->move_piece(final_position + 1, the_rook);
+                    break;
+                }
+            }
+        }
+
+        
         add_move(initial_position, final_position);
         change_turn_to_move();
         add_ply();
         if (get_ply() % 2) {
             add_turn_number();
         }
-    }else {
+    }else{
         std::cout << "Invalid move " << std::endl;
     }
 
