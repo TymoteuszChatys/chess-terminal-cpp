@@ -23,6 +23,7 @@ namespace chess
         controller* board_controller;
         std::vector<std::shared_ptr<piece>> pieces;
         int size{ 10 * 12 };
+        int en_passant_square;
         bool white_castle_king;
         bool white_castle_queen;
         bool black_castle_king;
@@ -31,6 +32,7 @@ namespace chess
 
         //default constructor, starting position.
         board();
+        board(std::string fen);
         board(controller *the_controller);
         board(const board& the_board, controller* a_controller);
 
@@ -49,8 +51,10 @@ namespace chess
         void set_white_castle_queen(bool true_or_false);
         void set_black_castle_king(bool true_or_false);
         void set_black_castle_queen(bool true_or_false);
+        void set_en_passant_square(int square);
 
         size_t get_size() const;
+        int is_there_any_valid_moves(std::string player_to_move);
         int* get_board_representation();
         int get_piece_at_position(int index);
         std::vector<std::shared_ptr<piece>> get_pieces();
@@ -59,6 +63,7 @@ namespace chess
         bool get_white_castle_queen();
         bool get_black_castle_king();
         bool get_black_castle_queen();
+        int get_en_passant_square();
 
 
         std::string whose_turn_to_move();

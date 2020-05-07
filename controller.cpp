@@ -30,30 +30,49 @@ std::vector<std::string> split_string(const std::string& string, int split_lengt
     return return_vector;
 }
 
-void controller::each_turn(board* the_board) 
+bool controller::each_turn(board* the_board) 
 {
     std::cout << *the_board << std::endl;
     this->print_move_history();
     std::cout << std::endl;
     bool valid_move{ false };
-    if (the_board->is_king_in_check(get_turn_to_move()) == true) {
-        GREEN_F; std::cout << the_board->whose_turn_to_move() << "'s king is in check" << std::endl; WHITE_F;
-    }
-    while (valid_move == false) {
-        std::cout << the_board->whose_turn_to_move() << "'s turn to move. Enter your move: ";
-        std::vector<int> moves = enter_move(the_board);
-        if (moves.at(1) == -101) {
-            the_board->print_valid_moves(moves.at(0));
-        }else if (moves.at(1) == -102) {
-            std::cout << "No valid move was entered. Enter square e.g e2 for information about available placements." << std::endl;
-        }else if (moves.at(1) == -110) {
-            std::cout << "Error: You can only move " << the_board->whose_turn_to_move() << " pieces" << std::endl;
-        }else {
-            this->make_move(moves.at(0), moves.at(1), the_board);
-            valid_move = true;
-            std::system("cls");
+    std::string player_to_move = the_board->whose_turn_to_move();
+    bool end_game{ false };
+    while (valid_move == false && end_game == false) {
+        if (the_board->is_king_in_check(get_turn_to_move()) == true && the_board->is_there_any_valid_moves(player_to_move) == false) {
+            GREEN_F; std::cout << player_to_move << " has been checkmated. Game over." << std::endl; WHITE_F;
+            end_game = true;
+        }else if (the_board->is_king_in_check(get_turn_to_move()) == true) {
+            GREEN_F; std::cout << player_to_move << "'s king is in check" << std::endl; WHITE_F;
+        }else if (the_board->is_there_any_valid_moves(player_to_move) == false) {
+            GREEN_F; std::cout << "Game has been drawn by stalemate " << std::endl; WHITE_F;
+            end_game = true;
         }
+        if (end_game == true) {
+            std::string key;
+            std::cout << std::endl << "enter any key to go back to the main menu" << std::endl;
+            std::cin >> key;
+        }else {
+            std::cout << player_to_move << "'s turn to move. Enter your move: ";
+            std::vector<int> moves = enter_move(the_board);
+            if (moves.at(1) == -101) {
+                the_board->print_valid_moves(moves.at(0));
+            }
+            else if (moves.at(1) == -102) {
+                std::cout << "No valid move was entered. Enter square e.g e2 for information about available placements." << std::endl;
+            }
+            else if (moves.at(1) == -110) {
+                std::cout << "Error: You can only move " << the_board->whose_turn_to_move() << " pieces" << std::endl;
+            }
+            else {
+                this->make_move(moves.at(0), moves.at(1), the_board);
+                valid_move = true;
+            }
+
+        }    
     } 
+    std::system("cls");
+    return end_game;
 }
 
 int controller::get_turn_to_move()
@@ -118,16 +137,52 @@ void controller::add_move(int initial_position, int final_position)
 
 void controller::print_move_history()
 {
-std::cout << "move history: " << std::endl;
-double move_number{ 1 }; // counter 
-for (auto iterator = move_history.begin(); iterator != move_history.end(); iterator++) {
-    if (fmod(move_number, 1.0) == 0) {
-        std::cout << move_number << ".";
+    std::cout << "move history: " << std::endl;
+    double move_number{ 1 }; // counter 
+    for (auto iterator = move_history.begin(); iterator != move_history.end(); iterator++) {
+        if (fmod(move_number, 1.0) == 0) {
+            std::cout << move_number << ".";
+        }
+        std::cout << *iterator << " ";
+        move_number = move_number + 0.5;
     }
-    std::cout << *iterator << " ";
-    move_number = move_number + 0.5;
 }
-}
+
+void controller::save_game(board* the_board) 
+{
+    double move_number{1};
+    auto end = std::chrono::system_clock::now();
+    //std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+
+    bool started = false;
+    std::ofstream out_file;
+    while (true) {
+        if (!started) {
+            int file_no = 1;
+            bool success = false;
+            while (success && file_no < INT_MAX) {
+                std::ifstream if_stream("games/game" + std::to_string(file_no) + ".txt", std::ios::out);// attempt read file to check if it exists
+                success = if_stream.good();
+                if_stream.close();
+                file_no++;//increase by one to get a new file name
+            }
+            out_file.open("games/game" + std::to_string(file_no) + ".txt", std::ios::app);
+            started = true;
+        }
+    }
+    
+    //out_file << "Date: " << std::ctime(&end_time) << std::endl;
+    
+    for (auto iterator = move_history.begin(); iterator != move_history.end(); iterator++) {
+        if (fmod(move_number, 1.0) == 0) {
+            out_file << std::endl << move_number << ".";
+        }
+        out_file << *iterator << " ";
+        move_number = move_number + 0.5;
+    }
+
+    out_file.close(); //moved out of loop so that it is not closed
+    }
 
 std::vector<int> controller::enter_move(board* the_board)
 {
@@ -156,7 +211,7 @@ std::vector<int> controller::enter_move(board* the_board)
 }
 
 
-
+//function to make the move on the board occur
 void controller::make_move(int initial_position, int final_position, board* the_board)
 {
     std::shared_ptr<piece> the_piece;
@@ -207,7 +262,7 @@ void controller::make_move(int initial_position, int final_position, board* the_
             }
         }
 
-        //castling only, moving the rook.
+        //castling only, moving the rook adjacent to the king.
         if (abs(the_piece->tag()) == 6 && abs(final_position - initial_position) == 2) {
             std::shared_ptr<piece> the_rook;
             for (auto iterator = the_pieces.begin(); iterator != the_pieces.end(); iterator++) {
@@ -223,7 +278,30 @@ void controller::make_move(int initial_position, int final_position, board* the_
             }
         }
 
-        
+
+        //en passant occured during this move, remove pawn being taken
+        if (abs(the_piece->tag()) == 1 && final_position == the_board->get_en_passant_square()) {
+            int remove_piece;
+            if (the_piece->get_colour<int>() == 1) {
+                remove_piece = -10;
+            }
+            else if (the_piece->get_colour<int>() == -1) {
+                remove_piece = 10;
+            }
+            the_board->remove_piece(final_position + remove_piece);
+        }
+
+        //en passant for future move
+        if (abs(the_piece->tag()) == 1 && abs(final_position - initial_position) == 20) {
+            if (the_piece->get_colour<int>() == 1) {
+                the_board->set_en_passant_square(final_position - 10);
+            }else if (the_piece->get_colour<int>() == -1) {
+                the_board->set_en_passant_square(final_position + 10);
+            }
+        }else {
+            the_board->set_en_passant_square(0);
+        }
+       
         add_move(initial_position, final_position);
         change_turn_to_move();
         add_ply();

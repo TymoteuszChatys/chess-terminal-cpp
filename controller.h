@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <string>
-
+#include <chrono>
+#include <fstream>
 
 
 namespace chess
@@ -27,22 +28,19 @@ namespace chess
         int get_turn_to_move();
         int get_turn_number();
         int get_ply();
+        
         void set_turn_number(int the_turn_number);
         void set_ply(int the_ply);
         void add_turn_number();
         void add_ply();
         void set_turn_to_move(int colour);
+        
         void change_turn_to_move();
-
         std::vector<int> enter_move(board* the_board);
         void make_move(int initial_position, int final_position, board* the_board);
 
-        void each_turn(board* the_board);
-
-        //to include
-        //white king castle
-        //black king castle
-        //en passant
+        bool each_turn(board* the_board);
+        void save_game(board* the_board);
     };
 
 

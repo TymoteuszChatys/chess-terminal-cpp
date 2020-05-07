@@ -196,6 +196,12 @@ std::string board::get_fen() const
         if (black_castle_queen == true) {
             fen = fen + "q";
         }
+
+        fen = fen + " ";
+
+        if (en_passant_square != 0) {
+            fen = fen + square_notation_to_human(en_passant_square);
+        }
     }
     return fen;
 }
@@ -207,6 +213,14 @@ board::board()
     board_representation = new int[size] {};
     populate_out_of_range();
     std::string starting_fen{ "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" };
+    position(starting_fen);
+}
+
+board::board(std::string fen)
+{
+    board_representation = new int[size] {};
+    populate_out_of_range();
+    std::string starting_fen{fen};
     position(starting_fen);
 }
 
@@ -374,6 +388,10 @@ void board::position(std::string FEN)
             set_black_castle_queen(false);
         } 
     }
+
+    if ((splitted_fen.size() >= 4) && (splitted_fen.at(3).length() >= 2)) {
+        en_passant_square = square_notation_to_computer(splitted_fen.at(3));
+    }
 }
 
 
@@ -435,6 +453,21 @@ void board::print_valid_moves(int position)
     std::cout << std::endl;
 }
 
+int board::is_there_any_valid_moves(std::string player_to_move) {
+    bool any_valid_moves{ false };
+    for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
+        if (any_valid_moves == false && (*iterator)->get_colour<std::string>() == player_to_move) {
+            std::vector<int> this_piece_valid_moves;
+            this_piece_valid_moves = (*iterator)->valid_moves(this);
+            if (this_piece_valid_moves.size() > 0) {
+                any_valid_moves = true;
+            }
+        }
+        
+    }
+    return any_valid_moves;
+}
+
 std::string board::whose_turn_to_move() 
 {
     std::string human_colour{};
@@ -465,6 +498,11 @@ bool board::get_black_castle_king()
 bool board::get_black_castle_queen()
 {
     return black_castle_queen;
+}
+
+int board::get_en_passant_square()
+{
+    return en_passant_square;
 }
 
 void board::set_white_castle_king(bool true_or_false) 
@@ -503,9 +541,13 @@ void board::set_black_castle_queen(bool true_or_false)
     }
 }
 
+void board::set_en_passant_square(int square)
+{
+    en_passant_square = square;
+}
+
 namespace chess 
 {
-
     std::ostream& operator<<(std::ostream& out_stream, const board& the_board)
     {
         std::string alignment("                  ");

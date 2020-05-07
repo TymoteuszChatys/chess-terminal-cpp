@@ -269,7 +269,6 @@ std::vector<int> king::valid_moves_before_check(chess::board* the_board)
             }
         }       
     }
-
     if ((this->get_colour<int>() == 1 && the_board->get_white_castle_queen() == true) || (this->get_colour<int>() == -1 && the_board->get_black_castle_queen() == true)) {
         int key = -1 + current_position;
         if (std::any_of(possible_moves.begin(), possible_moves.end(), compare(key))) {
@@ -433,6 +432,21 @@ std::vector<int> pawn::valid_moves_before_check(chess::board* the_board)
             }
         }
 
+    }
+
+    //special chess move "en passant" must be handled seperately due to its complexity
+
+    int en_passant_square = the_board->get_en_passant_square();
+    if (en_passant_square != 0) {
+        if (this->get_colour<int>() == -1) {
+            if (this->position == en_passant_square + 11 || this->position == en_passant_square + 9) {
+                possible_moves.push_back(en_passant_square);
+            }
+        }else if (this->get_colour<int>() == 1) {
+            if (this->position == en_passant_square - 11 || this->position == en_passant_square - 9) {
+                possible_moves.push_back(en_passant_square);
+            }
+        }
     }
     return possible_moves;
 }
