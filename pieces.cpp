@@ -4,6 +4,7 @@
 #include "board.h"
 #include "pieces.h"
 #include "controller.h"
+#include "tutorial_controller.h"
 
 using namespace chess;
 
@@ -82,7 +83,35 @@ int pawn::tag()
     return 1 * get_colour<int>();
 }
 
+int king::points()
+{
+    return 100 * get_colour<int>();
+}
 
+int queen::points()
+{
+    return 9 * get_colour<int>();
+}
+
+int rook::points()
+{
+    return 5 * get_colour<int>();
+}
+
+int bishop::points()
+{
+    return 3 * get_colour<int>();
+}
+
+int knight::points()
+{
+    return 3 * get_colour<int>();
+}
+
+int pawn::points()
+{
+    return 1 * get_colour<int>();
+}
 
 void piece::print_piece_data() 
 {// Print out pieces data
@@ -124,13 +153,13 @@ void piece::set_position(int new_position)
 //Valid Moves//
 ///////////////
 
-std::vector<int> check_moves_validity_for_self_check(int position, std::vector<int> moves, chess::board& the_board)
+std::vector<int> check_moves_validity_for_self_check(int position, std::vector<int> moves, board& the_board)
 {
     int move_number{};
     std::vector<int> allowed_moves = moves;
     for (auto move = allowed_moves.begin(); move != allowed_moves.end();){
-        chess::controller global_controller;
-        board temporary_board(the_board, &global_controller);
+        controller temporary_controller;
+        board temporary_board(&the_board, &temporary_controller);
         std::shared_ptr<piece> the_piece;
         std::vector<std::shared_ptr<piece>> temporary_board_pieces = temporary_board.get_pieces();
         for (auto iterator = temporary_board_pieces.begin(); iterator != temporary_board_pieces.end(); iterator++) {
@@ -438,11 +467,11 @@ std::vector<int> pawn::valid_moves_before_check(chess::board* the_board)
 
     int en_passant_square = the_board->get_en_passant_square();
     if (en_passant_square != 0) {
-        if (this->get_colour<int>() == -1) {
+        if (this->get_colour<int>() == -1 && current_position > 50 && current_position < 59) {
             if (this->position == en_passant_square + 11 || this->position == en_passant_square + 9) {
                 possible_moves.push_back(en_passant_square);
             }
-        }else if (this->get_colour<int>() == 1) {
+        }else if (this->get_colour<int>() == 1 && current_position > 60 && current_position < 69) {
             if (this->position == en_passant_square - 11 || this->position == en_passant_square - 9) {
                 possible_moves.push_back(en_passant_square);
             }

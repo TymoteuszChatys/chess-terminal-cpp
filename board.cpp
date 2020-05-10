@@ -1,15 +1,16 @@
 ﻿#include "board.h"
 #include "pieces.h"
 #include "controller.h"
+#include "tutorial_controller.h"
 #include "ctype.h"
 #include <cctype>
 
 //Colours
-HANDLE boardConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-#define GREEN_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_GREEN))  //sets the console colour to green
-#define RED_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_RED))  //sets the console colour to red
-#define BLUE_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_BLUE)) //sets the console colour to blue
-#define WHITE_F		(SetConsoleTextAttribute(boardConsole, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN)) //defines the colour white
+HANDLE board_console = GetStdHandle(STD_OUTPUT_HANDLE);
+#define GREEN_F		(SetConsoleTextAttribute(board_console, FOREGROUND_GREEN))  //sets the console colour to green
+#define RED_F		(SetConsoleTextAttribute(board_console, FOREGROUND_RED))  //sets the console colour to red
+#define BLUE_F		(SetConsoleTextAttribute(board_console, FOREGROUND_BLUE)) //sets the console colour to blue
+#define WHITE_F		(SetConsoleTextAttribute(board_console, FOREGROUND_RED | FOREGROUND_BLUE | FOREGROUND_GREEN)) //defines the colour white
 
 
 
@@ -216,13 +217,15 @@ board::board()
     position(starting_fen);
 }
 
-board::board(std::string fen)
+board::board(std::string fen, controller* the_controller)
 {
+    board_controller = the_controller;
     board_representation = new int[size] {};
     populate_out_of_range();
     std::string starting_fen{fen};
     position(starting_fen);
 }
+
 
 board::board(controller *the_controller)
 {
@@ -235,12 +238,21 @@ board::board(controller *the_controller)
 
 
 //Copy constructor
-board::board(const board& a_board, controller *a_controller)
+board::board(const board* a_board, controller* the_controller)
 {
-    board_controller = a_controller;
+    board_controller = the_controller;
     board_representation = new int[size] {};
     populate_out_of_range();
-    position(a_board.get_fen());
+    position(a_board->get_fen());
+}
+
+board::board(const board* a_board, controller* the_controller, int initial_position, int final_position)
+{
+    board_controller = the_controller;
+    board_representation = new int[size] {};
+    populate_out_of_range();
+    position(a_board->get_fen());
+    the_controller->make_move(initial_position, final_position, this);
 }
 
 
@@ -253,7 +265,7 @@ void board::populate_out_of_range()
     }
 }
 
-//FEN string parser. Takes in the FEN strings and makes the baord as appropriate.
+//FEN string parser. Takes in the FEN strings and makes the board position.
 void board::position(std::string FEN) 
 {
     std::vector<std::string> splitted_fen = split(FEN, ' ');
@@ -395,17 +407,6 @@ void board::position(std::string FEN)
 }
 
 
-void board::print_pieces()
-{
-    std::cout << "Pieces in position: " << std::endl;
-    int piece_number{ 1 }; // counter 
-    for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
-        std::cout << "Piece " << piece_number << " ";
-        (*iterator)->print_piece_data();
-        piece_number++;
-    }
-}
-
 void board::remove_piece(int position) 
 {
     std::vector<piece>::iterator iterator;
@@ -426,7 +427,7 @@ void board::move_piece(int final_position, std::shared_ptr<piece> the_piece)
     board_representation[final_position] = the_piece->tag();
 }
 
-void board::print_valid_moves(int position)
+void board::print_valid_moves(int position, bool check_or_not)
 {
     int position_in_piece_vector{};
     std::vector<piece>::iterator iterator;
@@ -434,7 +435,12 @@ void board::print_valid_moves(int position)
     for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
         int currentPos = (*iterator)->get_position<int>();
         if (currentPos == position) {
-            this_piece_valid_moves = (*iterator)->valid_moves(this);            
+            if (check_or_not == true) {
+                this_piece_valid_moves = (*iterator)->valid_moves(this);
+            }else if (check_or_not == false) {
+                this_piece_valid_moves = (*iterator)->valid_moves_before_check(this);
+            }
+                      
             break;
         }
         position_in_piece_vector++;
@@ -453,7 +459,7 @@ void board::print_valid_moves(int position)
     std::cout << std::endl;
 }
 
-int board::is_there_any_valid_moves(std::string player_to_move) {
+bool board::is_there_any_valid_moves(std::string player_to_move) {
     bool any_valid_moves{ false };
     for (auto iterator = pieces.begin(); iterator != pieces.end(); iterator++) {
         if (any_valid_moves == false && (*iterator)->get_colour<std::string>() == player_to_move) {
@@ -467,6 +473,11 @@ int board::is_there_any_valid_moves(std::string player_to_move) {
     }
     return any_valid_moves;
 }
+
+
+
+
+
 
 std::string board::whose_turn_to_move() 
 {

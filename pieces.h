@@ -23,6 +23,7 @@ namespace chess
         void set_position(int new_position);
         virtual std::string name() = 0;
         virtual int tag() = 0;
+        virtual int points() = 0;
         virtual std::vector<int> valid_moves_before_check(chess::board* the_board) = 0;
         virtual std::vector<int> valid_moves(chess::board* the_board) = 0;
         void print_piece_data();
@@ -38,6 +39,7 @@ namespace chess
 
         std::string name();
         int tag();
+        int points();
         std::vector<int> valid_moves(chess::board* the_board);
         std::vector<int> valid_moves_before_check(chess::board* the_board);
     };
@@ -51,6 +53,7 @@ namespace chess
 
         std::string name();
         int tag();
+        int points();
         std::vector<int> valid_moves(chess::board* the_board);
         std::vector<int> valid_moves_before_check(chess::board* the_board);
     };
@@ -64,6 +67,7 @@ namespace chess
 
         std::string name();
         int tag();
+        int points();
         std::vector<int> valid_moves(chess::board* the_board);
         std::vector<int> valid_moves_before_check(chess::board* the_board);
     };
@@ -77,6 +81,7 @@ namespace chess
 
         std::string name();
         int tag();
+        int points();
         std::vector<int> valid_moves(chess::board* the_board);
         std::vector<int> valid_moves_before_check(chess::board* the_board);
     };
@@ -90,6 +95,7 @@ namespace chess
 
         std::string name();
         int tag();
+        int points();
         std::vector<int> valid_moves(chess::board* the_board);
         std::vector<int> valid_moves_before_check(chess::board* the_board);
     };
@@ -103,6 +109,7 @@ namespace chess
 
         std::string name();
         int tag();
+        int points();
         std::vector<int> valid_moves(chess::board* the_board);
         std::vector<int> valid_moves_before_check(chess::board* the_board);
     };

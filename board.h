@@ -32,19 +32,18 @@ namespace chess
 
         //default constructor, starting position.
         board();
-        board(std::string fen);
+        board(std::string fen, controller* the_controller);
         board(controller *the_controller);
-        board(const board& the_board, controller* a_controller);
+        board(const board* a_board, controller* the_controller);
+        board(const board* a_board, controller* the_controller, int initial_position, int final_position);
 
-        virtual ~board() {
-            delete[] board_representation;
-        }
+
+        virtual ~board() {delete[] board_representation;}
         void remove_piece(int position);
         void move_piece(int final_position, std::shared_ptr<piece> the_piece);
         void populate_out_of_range();
         void position(std::string FEN);
-        void print_pieces();
-        void print_valid_moves(int position);
+        void print_valid_moves(int position, bool check_or_not);
         bool is_king_in_check(int colour);
 
         void set_white_castle_king(bool true_or_false);
@@ -54,7 +53,7 @@ namespace chess
         void set_en_passant_square(int square);
 
         size_t get_size() const;
-        int is_there_any_valid_moves(std::string player_to_move);
+        bool is_there_any_valid_moves(std::string player_to_move);
         int* get_board_representation();
         int get_piece_at_position(int index);
         std::vector<std::shared_ptr<piece>> get_pieces();
@@ -66,8 +65,7 @@ namespace chess
         int get_en_passant_square();
 
 
-        std::string whose_turn_to_move();
-        
+        std::string whose_turn_to_move();        
     };
 
 
